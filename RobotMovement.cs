@@ -8,15 +8,14 @@ using System.Net.Http;
 
 public class RobotMovement : MonoBehaviour
 {
-    // Start is called before the first frame update
-    //string robot_api = "http://10.100.53.199:50000/motion/walk_left";
+    string robot_motion = "http://10.100.54.50:50000/motion/";
 
     UnityEvent button_pressed = new UnityEvent();
-    bool currently_pressed = false;
     bool previously_pressed = false;
 
     static readonly HttpClient client = new HttpClient();
 
+    // Start is called before the first frame update
     void Start()
     {
         button_pressed.AddListener(ButtonPress);
@@ -30,20 +29,10 @@ public class RobotMovement : MonoBehaviour
         if (Input.anyKeyDown && !previously_pressed)
         {
             button_pressed.Invoke();
-            Debug.Log("A button was pressed");
+            Debug.Log("Some button was pressed");
         }
         previously_pressed = Input.anyKeyDown;
 
-        
-        /*
-        if (Input.GetKey("a") && previously_pressed == false)
-        {
-            
-            APICall("http://10.100.53.199:50000/motion/walk_left");
-            Debug.Log("a was pressed");
-
-        }
-        */
     }
 
     static async Task APICall(string uri)
@@ -60,29 +49,29 @@ public class RobotMovement : MonoBehaviour
         // Walk left/right
         if ((Input.GetAxis("LeftJoystickVertical") > 0 || Input.GetKey("a")) && currently_pressed == false)
         {
-            APICall("http://10.100.53.199:50000/motion/walk_left");
+            APICall(robot_motion + "walk_left");
             Debug.Log("a was pressed");
         }
         else if ((Input.GetAxis("LeftJoystickVertical") < 0 || Input.GetKey("d")) && currently_pressed == false) 
         {
-            APICall("http://10.100.53.199:50000/motion/walk_right");
+            APICall(robot_motion + "walk_right");
             Debug.Log("d was pressed");
         }
         // Walk forward
         else if (Input.GetKey("w") && currently_pressed == false)
         {
-            APICall("http://10.100.53.199:50000/motion/walk_forward_short");
+            APICall(robot_motion+ "walk_forward_short");
             Debug.Log("w was pressed");
         }
         // Rotate left/right
         else if (Input.GetKey("q") && currently_pressed == false)
         {
-            APICall("http://10.100.53.199:50000/motion/turn_left");
+            APICall(robot_motion + "turn_left");
             Debug.Log("s was pressed");
         }
         else if (Input.GetKey("e") && currently_pressed == false)
         {
-            APICall("http://10.100.53.199:50000/motion/turn_right");
+            APICall(robot_motion + "turn_right");
             Debug.Log("s was pressed");
         }
     }
