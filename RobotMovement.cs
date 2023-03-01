@@ -9,6 +9,7 @@ using System.Net.Http;
 public class RobotMovement : MonoBehaviour
 {
     string robot_motion = "http://10.100.54.50:50000/motion/";
+    public static string textOutput;
 
     UnityEvent button_pressed = new UnityEvent();
     bool previously_pressed = false;
@@ -19,7 +20,7 @@ public class RobotMovement : MonoBehaviour
     void Start()
     {
         button_pressed.AddListener(ButtonPress);
-        Debug.Log("the code is running");
+        textOutput = "the code is running";
     }
 
     // Update is called once per frame
@@ -29,7 +30,7 @@ public class RobotMovement : MonoBehaviour
         if (Input.anyKeyDown && !previously_pressed)
         {
             button_pressed.Invoke();
-            Debug.Log("Some button was pressed");
+            textOutput = "Some button was pressed";
         }
         previously_pressed = Input.anyKeyDown;
 
@@ -39,7 +40,7 @@ public class RobotMovement : MonoBehaviour
     {
         string responseBody = await client.GetStringAsync(uri);
 
-        Debug.Log(responseBody);
+        textOutput = responseBody;
     }
 
     // Called whenever a key is pressed
@@ -47,32 +48,32 @@ public class RobotMovement : MonoBehaviour
     void ButtonPress()
     {
         // Walk left/right
-        if ((Input.GetAxis("LeftJoystickVertical") > 0 || Input.GetKey("a")) && currently_pressed == false)
+        if (Input.GetAxis("LeftJoystickHorizontal") > 0)
         {
             APICall(robot_motion + "walk_left");
-            Debug.Log("a was pressed");
+            textOutput = "a was pressed";
         }
-        else if ((Input.GetAxis("LeftJoystickVertical") < 0 || Input.GetKey("d")) && currently_pressed == false) 
+        else if (Input.GetAxis("LeftJoystickHorizontal") < 0) 
         {
             APICall(robot_motion + "walk_right");
-            Debug.Log("d was pressed");
+            textOutput = "d was pressed";
         }
         // Walk forward
-        else if (Input.GetKey("w") && currently_pressed == false)
+        else if (Input.GetAxis("LeftJoystickVertical") < 0)
         {
             APICall(robot_motion+ "walk_forward_short");
-            Debug.Log("w was pressed");
+            textOutput = "w was pressed";
         }
         // Rotate left/right
-        else if (Input.GetKey("q") && currently_pressed == false)
+        else if (Input.GetAxis("RightJoystickHorizontal") < 0)
         {
             APICall(robot_motion + "turn_left");
-            Debug.Log("s was pressed");
+            textOutput = "q was pressed";
         }
-        else if (Input.GetKey("e") && currently_pressed == false)
+        else if (Input.GetAxis("RightJoystickHorizontal") > 0)
         {
             APICall(robot_motion + "turn_right");
-            Debug.Log("s was pressed");
+            textOutput = "e was pressed";
         }
     }
 }
