@@ -7,7 +7,7 @@ using System.Net.Http;
 
 public class RobotMovement : MonoBehaviour
 {
-    string website = "http://34.23.107.56/";
+    string website = // Website IP goes here
     string robot_motion;
     public static string textOutput; // String variable used to take in the output of a given command
 
