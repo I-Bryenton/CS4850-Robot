@@ -11,21 +11,16 @@ public class TextToConsole : MonoBehaviour
 
     public GameObject textObject, consolePanel;
 
-    string previousInput = "";
     // Start is called before the first frame update
     void Start()
     {
-        //textElement.text = RobotMovement.textOutput;
+
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        if (RobotMovement.textOutput != previousInput)
-        {
-            SendToConsole(RobotMovement.textOutput);
-        }
-        previousInput = RobotMovement.textOutput;
+        
     }
 
     public void SendToConsole(string text)
@@ -44,7 +39,6 @@ public class TextToConsole : MonoBehaviour
         newMessage.textElement.text = newMessage.text;
 
         messageList.Add(newMessage);
-
     }
 }
 
