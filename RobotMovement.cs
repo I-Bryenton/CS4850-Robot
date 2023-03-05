@@ -7,8 +7,9 @@ using System.Net.Http;
 
 public class RobotMovement : MonoBehaviour
 {
-    string website = // Website IP goes here
-    string robot_motion;
+    string website = "http://34.23.107.56/";
+    static string robot_motion;
+    static string next_motion;
     public static string textOutput; // String variable used to take in the output of a given command
 
     UnityEvent button_pressed = new UnityEvent();
@@ -26,9 +27,9 @@ public class RobotMovement : MonoBehaviour
         console = GameObject.FindGameObjectWithTag("ConsoleManager").GetComponent<TextToConsole>();
 
         robot_motion = await client.GetStringAsync(website); // Calls the cloud website to get the updated IP address of the Raspberry Pi
-        robot_motion = robot_motion.Replace("\n", "").Replace("\r", "") + ":50000/motion/"; // Adds the trail to the IP address to access the motion API commands
+        robot_motion = "http://" + robot_motion.Replace("\n", "").Replace("\r", "") + ":50000/motion/"; // Adds the trail to the IP address to access the motion API commands
         Debug.Log(robot_motion);
-        textOutput = "the code is running\n" + robot_motion;
+        textOutput = "the code is running";
         console.SendToConsole(textOutput);
     }
 
@@ -46,15 +47,10 @@ public class RobotMovement : MonoBehaviour
 
     }
 
-    static async Task APICall(string uri)
+    static async Task APICall(string ipAddress)
     {
-        Debug.Log("The responseBody was printed");
-        string responseBody = await client.GetStringAsync(uri);
-        Debug.Log(responseBody);
-
-        TextToConsole tempConsole = GameObject.FindGameObjectWithTag("ConsoleManager").GetComponent<TextToConsole>();
-        tempConsole.SendToConsole(responseBody);
-        //textOutput = "";
+        string responseBody = await client.GetStringAsync(ipAddress);
+        textOutput = ipAddress;
     }
 
     // Called whenever a key is pressed
@@ -62,33 +58,33 @@ public class RobotMovement : MonoBehaviour
     void ButtonPress()
     {
         // Walk left/right
-        if (Input.GetAxis("LeftJoystickHorizontal") > 0 || Input.GetKey("a"))
+        if (Input.GetAxis("LeftJoystickHorizontal") == 1 || Input.GetKey("a"))
         {
+            next_motion = robot_motion + "walk_left";
             APICall(robot_motion + "walk_left");
             textOutput = "Left joystick (left) was pressed"; // Sent to TextToConsole script to be printed to the user
-            Debug.Log("The A key was pressed");
         }
-        else if (Input.GetAxis("LeftJoystickHorizontal") < 0 || Input.GetKey("d")) 
+        else if (Input.GetAxis("LeftJoystickHorizontal") == -1) 
         {
             APICall(robot_motion + "walk_right");
             textOutput = "Left joystick (right) was pressed";
-            Debug.Log("The D key was pressed");
         }
         // Walk forward
-        else if (Input.GetAxis("LeftJoystickVertical") < 0)
+        else if (Input.GetAxis("LeftJoystickVertical") == 1)
         {
-            APICall(robot_motion+ "walk_forward_short");
+            APICall(robot_motion + "walk_forward_short");
             textOutput = "Left joystick (forward) was pressed";
         }
         // Rotate left/right
-        else if (Input.GetAxis("RightJoystickHorizontal") < 0)
+        else if (Input.GetAxis("RightJoystickHorizontal") == -1)
         {
             APICall(robot_motion + "turn_left");
             textOutput = "Right joystick (turn left) was pressed";
         }
-        else if (Input.GetAxis("RightJoystickHorizontal") > 0)
+        else if (Input.GetAxis("RightJoystickHorizontal") == 1)
         {
-            APICall(robot_motion + "turn_right");
+            robot_motion += "turn_right";
+            APICall(robot_motion);
             textOutput = "Right joystick (turn right) was pressed";
         }
 
