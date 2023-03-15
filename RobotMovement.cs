@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Net;
 
 public class RobotMovement : MonoBehaviour
 {
@@ -15,7 +16,14 @@ public class RobotMovement : MonoBehaviour
     UnityEvent button_pressed = new UnityEvent();
     bool previously_pressed = false;
 
-    static readonly HttpClient client = new HttpClient();
+    static bool useProxy = false;
+
+    static HttpClientHandler hch = new HttpClientHandler 
+    {
+        UseProxy = useProxy,
+    };
+
+    static readonly HttpClient client = new HttpClient(hch);
 
     public TextToConsole console;
 
@@ -36,6 +44,12 @@ public class RobotMovement : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
+        if (Input.anyKeyDown)
+        {
+            // Timer ++
+        }
+
+
         // Makes the call to ButtonPress if any button is pressed
         // Needs to be changed to only take one input in at a time
         // Include a timer so that headset doesn't get bogged down with inputs
@@ -58,13 +72,13 @@ public class RobotMovement : MonoBehaviour
     void ButtonPress()
     {
         // Walk left/right
-        if (Input.GetAxis("LeftJoystickHorizontal") == 1 || Input.GetKey("a"))
+        if (Input.GetAxis("LeftJoystickHorizontal") == -1 || Input.GetKey("a"))
         {
             next_motion = robot_motion + "walk_left";
             APICall(robot_motion + "walk_left");
             textOutput = "Left joystick (left) was pressed"; // Sent to TextToConsole script to be printed to the user
         }
-        else if (Input.GetAxis("LeftJoystickHorizontal") == -1) 
+        else if (Input.GetAxis("LeftJoystickHorizontal") == 1) 
         {
             APICall(robot_motion + "walk_right");
             textOutput = "Left joystick (right) was pressed";
@@ -83,8 +97,7 @@ public class RobotMovement : MonoBehaviour
         }
         else if (Input.GetAxis("RightJoystickHorizontal") == 1)
         {
-            robot_motion += "turn_right";
-            APICall(robot_motion);
+            APICall(robot_motion + "turn_right");
             textOutput = "Right joystick (turn right) was pressed";
         }
 
