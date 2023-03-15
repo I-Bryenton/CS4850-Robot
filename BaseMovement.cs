@@ -13,8 +13,15 @@ public class RobotMovement : MonoBehaviour
 
     UnityEvent button_pressed = new UnityEvent();
     bool previously_pressed = false;
+    
+    static bool useProxy = false;
 
-    static readonly HttpClient client = new HttpClient();
+    static HttpClientHandler hch = new HttpClientHandler 
+    {
+        UseProxy = useProxy,
+    };
+
+    static readonly HttpClient client = new HttpClient(hch);
 
     // Start is called before the first frame update
     async void Start()
