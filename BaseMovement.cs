@@ -9,6 +9,7 @@ public class BaseMovement : MonoBehaviour
 {
     string website = "http://34.23.107.56/";
     static string robot_motion;
+    static string robot_head;
 
     static bool useProxy = false;
 
@@ -17,11 +18,13 @@ public class BaseMovement : MonoBehaviour
         UseProxy = useProxy,
     };
 
-    static readonly HttpClient client = new HttpClient(hch);
+    static public readonly HttpClient client = new HttpClient(hch);
 
     private InputDevice rightController, leftController;
 
     bool crouched = false;
+    int xAxis = 127;
+    int yAxis = 127;
 
     // Start is called before the first frame update
     async void Start()
@@ -44,6 +47,7 @@ public class BaseMovement : MonoBehaviour
         }
 
         robot_motion = await client.GetStringAsync(website); // Calls the cloud website to get the updated IP address of the Raspberry Pi
+        robot_head = "http://" + robot_motion.Replace("\n", "").Replace("\r", "") + ":50000/motor?id=";
         robot_motion = "http://" + robot_motion.Replace("\n", "").Replace("\r", "") + ":50000/motion/"; // Adds the trail to the IP address to access the motion API commands
         Debug.Log(robot_motion);  // Outputs the Pi IP to console if needed
     }
@@ -59,6 +63,11 @@ public class BaseMovement : MonoBehaviour
         // Put all commands in here
         rightController.TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 rightVec);
         leftController.TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 leftVec);
+        rightController.TryGetFeatureValue(CommonUsages.trigger, out float rightTrigger);
+        rightController.TryGetFeatureValue(CommonUsages.grip, out float rightGrip);
+        leftController.TryGetFeatureValue(CommonUsages.trigger, out float leftTrigger);
+        leftController.TryGetFeatureValue(CommonUsages.grip, out float leftGrip);
+
 
         // Walk left/right movement
         if (leftVec.x < -0.5)
@@ -86,6 +95,32 @@ public class BaseMovement : MonoBehaviour
             APICall(robot_motion + "turn_left");
         }
 
+        /*
+        // Turn head right/left
+        else if (rightTrigger > 0.3)
+        {
+            if (xAxis < 254) { xAxis += 1; }
+            APICall(robot_head + $"23&position={xAxis}");
+        }
+        else if (leftTrigger > 0.3)
+        {
+            if (xAxis > 1) { xAxis -= 1; }
+            APICall(robot_head + $"23&position={xAxis}");
+        }
+
+        // Turn head up/down
+        else if (rightGrip > 0.3)
+        {
+            if (yAxis < 160) { yAxis += 1; }
+            APICall(robot_head + $"24&position={yAxis}");
+        }
+        else if (leftGrip > 0.3)
+        {
+            if (yAxis > 100) { yAxis -= 1; }
+            APICall(robot_head + $"24&position={yAxis}");
+        }
+        */
+
         /* 
          * Crouch occurs if pressed 3 times
          * Needs work as it basically shuts the robot down and won't stand back up
@@ -102,7 +137,7 @@ public class BaseMovement : MonoBehaviour
             }
             else 
             { 
-                APICall(robot_motion + "basic_motion");
+                APICall(robot_motion + "reset");
                 crouched = false;
             }
         }
@@ -113,10 +148,14 @@ public class BaseMovement : MonoBehaviour
             APICall(robot_motion + "dance_gangnamstyle");
         }
 
-        // Put the robot back into intial standing position
+        // Put the robot back into intial standing position then walking position (left then right joystick click)
         else if (leftController.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out bool LJClick) && LJClick)
         {
             APICall(robot_motion + "reset");
+        }
+        else if (rightController.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out bool RJClick) && RJClick)
+        {
+            APICall(robot_motion + "basic_motion");
         }
     }
 
