@@ -8,8 +8,8 @@ using UnityEngine.XR;
 public class BaseMovement : MonoBehaviour
 {
     string website = "http://34.23.107.56/";
-    static string robot_motion;
-    static string robot_head;
+    static public string baseIP;
+    static string robot_motion, robot_head;
 
     static bool useProxy = false;
 
@@ -34,40 +34,33 @@ public class BaseMovement : MonoBehaviour
         InputDeviceCharacteristics lcChara = InputDeviceCharacteristics.Left | InputDeviceCharacteristics.Controller;
         InputDevices.GetDevicesWithCharacteristics(rcChara, devices);
 
-        if (devices.Count > 0 ) 
-        {
-            rightController = devices[0];
-        }
+        if (devices.Count > 0) { rightController = devices[0]; }
 
         InputDevices.GetDevicesWithCharacteristics(lcChara, devices);
 
-        if (devices.Count > 0)
-        {
-            leftController = devices[0];
-        }
+        if (devices.Count > 0) { leftController = devices[0]; }
 
-        robot_motion = await client.GetStringAsync(website); // Calls the cloud website to get the updated IP address of the Raspberry Pi
-        robot_head = "http://" + robot_motion.Replace("\n", "").Replace("\r", "") + ":50000/motor?id=";
-        robot_motion = "http://" + robot_motion.Replace("\n", "").Replace("\r", "") + ":50000/motion/"; // Adds the trail to the IP address to access the motion API commands
+        baseIP = await client.GetStringAsync(website); // Calls the cloud website to get the updated IP address of the Raspberry Pi
+        baseIP = "http://" + baseIP.Replace("\n", "").Replace("\r", "") + ":50000/";
+        robot_head = baseIP + "motor?id=";
+        robot_motion = baseIP + "motion/"; // Adds the trail to the IP address to access the motion API commands
         Debug.Log(robot_motion);  // Outputs the Pi IP to console if needed
+
     }
 
+    /* Sit command leaves robot limp
+     * Can use motor requests while sitting
+     * Need to use pc_control request if motion requests are input in-between motor requests
+    */
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (Input.anyKeyDown)
-        {
-            // Timer ++
-        }
-
-        // Put all commands in here
         rightController.TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 rightVec);
         leftController.TryGetFeatureValue(CommonUsages.primary2DAxis, out Vector2 leftVec);
         rightController.TryGetFeatureValue(CommonUsages.trigger, out float rightTrigger);
         rightController.TryGetFeatureValue(CommonUsages.grip, out float rightGrip);
         leftController.TryGetFeatureValue(CommonUsages.trigger, out float leftTrigger);
         leftController.TryGetFeatureValue(CommonUsages.grip, out float leftGrip);
-
 
         // Walk left/right movement
         if (leftVec.x < -0.5)
@@ -95,16 +88,15 @@ public class BaseMovement : MonoBehaviour
             APICall(robot_motion + "turn_left");
         }
 
-        /*
         // Turn head right/left
         else if (rightTrigger > 0.3)
         {
-            if (xAxis < 254) { xAxis += 1; }
+            if (xAxis < 210) { xAxis += 1; }
             APICall(robot_head + $"23&position={xAxis}");
         }
         else if (leftTrigger > 0.3)
         {
-            if (xAxis > 1) { xAxis -= 1; }
+            if (xAxis > 45) { xAxis -= 1; }
             APICall(robot_head + $"23&position={xAxis}");
         }
 
@@ -119,14 +111,19 @@ public class BaseMovement : MonoBehaviour
             if (yAxis > 100) { yAxis -= 1; }
             APICall(robot_head + $"24&position={yAxis}");
         }
-        */
 
         /* 
-         * Crouch occurs if pressed 3 times
-         * Needs work as it basically shuts the robot down and won't stand back up
+         * Crouch is inconsistent
+         * Needs work as it resets all motor values
          * This includes the head and arm motors
          * Need these motors to still be responsive as the user will need to crouch and pick stuff up
+         * 
+         * Motion commands reset all individual motor values
+         * Have to use individual motor requests to move everything
+         * Some movement commands are incorrect in terms of default values: left upper shoulder 80 default
+         * 
          */
+         
         else if (rightController.TryGetFeatureValue(CommonUsages.secondaryButton, out bool Bbutton) && Bbutton)
         {
             // APICall(robot_motion + "")
@@ -142,10 +139,13 @@ public class BaseMovement : MonoBehaviour
             }
         }
         
-        // For fun :)
+        // For fun :) ("dance_gangnamstyle")
+        // For individual motor requests ("pc_control")
         else if (leftController.TryGetFeatureValue(CommonUsages.secondaryButton, out bool Ybutton) && Ybutton)
         {
-            APICall(robot_motion + "dance_gangnamstyle");
+            APICall(robot_motion + "pc_control");
+            BodyTracking.motorIPNeck = BaseMovement.baseIP + "motor?id=23&position="; // Neck is for left/right
+            BodyTracking.motorIPHead = BaseMovement.baseIP + "motor?id=24&position="; // Head is for up/down
         }
 
         // Put the robot back into intial standing position then walking position (left then right joystick click)
@@ -159,7 +159,7 @@ public class BaseMovement : MonoBehaviour
         }
     }
 
-    static async Task APICall(string ipAddress)
+    static public async Task APICall(string ipAddress)
     {
         string responseBody = await client.GetStringAsync(ipAddress);
     }
